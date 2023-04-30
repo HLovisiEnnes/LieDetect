@@ -3,6 +3,8 @@ import scipy, sklearn
 import velour
 import matplotlib.pyplot as plt
 import random
+import os
+import shutil
 from .matrix_manipulation import *
 ' Functions to sample points '
 
@@ -87,8 +89,137 @@ def SampleOnTorus(dim=2, ambient_dim=6, n_points=100, frequencies=None, frequenc
     
     return Sample, LieAlgebra
 
+def GorillaImages(dim = 1, file = "./RotatingImages/gorilla_white.png", pas = 7, save = None, verbosity = 1):
+    '''
+    Generates a data set of images of a gorilla translated on the y-direction or x and y directions (see ReadMe). 
+    Input:
+        - dim: if 1, the gorilla is translated on the y-direction only; if 2 it is translated on the x and y directions
+        - file: path to where to find the initial gorilla
+        - pas: parameter to decrease the image sizes
+        - save : path to save the numpy array of output, if None, does not save
+        - vebosity: if 2 full, otherwise gives only output
+    Output:
+        - X: array corresponding to data set of trasnlated images
+    '''
+    # Open file
+    pic = plt.imread(file)
+    pic = pic[::pas,::pas,0:3]
+    pic = pic[7:137,9:130]
+
+    shape = np.shape(pic)
+    x = np.shape(pic)[0]
+    y = np.shape(pic)[1]
+
+    # Translate image
+    X = []
+    x2, y2 = int(x/2), int(y/2)
+    
+    if dim == 1:
+        X = np.zeros((x2,x*y*3))
+        for i in range(x2):
+            pic2 = np.roll(pic, 2*i, 0)
+            X[i] = pic2.flatten()
+        shape = tuple([130, 120, 3])
+        x, y = shape[0], shape[1]
+        N1 = 65
+        N = N1 
+        len_img = 130*120*3
+        
+    elif dim == 2:
+        X = np.zeros((x2,y2,x*y*3))
+        for i in range(x2):
+            for j in range(y2):
+                pic2 = np.roll(pic, 2*i, 0)
+                pic2 = np.roll(pic2, 2*j, 1)
+                X[i,j] = pic2.flatten()
+            
+        shape = tuple([130, 120, 3])
+        x = shape[0]; y = shape[1]
+        N1 = 65; N2 = 60
+        N = N1*N2
+        len_img = 130*120*3
+    else:
+        raise Exception("Invalid parameter value: dim must be either 1 or 2!")
+
+    #saves array if desired
+    if save != None:
+        np.save('RotatingImages/' + save, X)
+
+    if verbosity == 2:
+        if dim == 1:
+            print('shape X:', np.shape(X))
+            # Plot some images of the dataset
+            for i in np.linspace(0, N1, 3)[:-1]:
+                i = int(i)
+                plt.figure(figsize=(3,3))
+                plt.imshow(X[i].reshape(shape))
+                plt.gca().axes.get_xaxis().set_visible(False)
+                plt.gca().axes.get_yaxis().set_visible(False)    
+        else:
+            print('shape X:', np.shape(X))
+            # Plot some images of the dataset
+            for j in list(np.linspace(0, N2, 4)[:-1])+[N2-2]:
+                for i in np.linspace(0, N1, 3)[:-1]:
+                    j = int(j); i = int(i)
+                    plt.figure(figsize=(3,3))
+                    plt.imshow(X[i,j].reshape(shape))
+                    plt.gca().axes.get_xaxis().set_visible(False)
+                    plt.gca().axes.get_yaxis().set_visible(False)
+    X = X.reshape((N, len_img))
+    X = X/max([np.linalg.norm(X[i]) for i in range(np.shape(X)[0])])
+    return X
+
+def rgb2gray(rgb): return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140]) #transforms rgb into gray scale
 
 
+def ArrowImages(N_images = 200, verbosity = 1, save = False):
+    '''
+    Makes a data set of arrows rotated about their centers
+    Input:
+        - N_images: the number of points in the data set
+        - vebosity: if 2 full, otherwise gives only output
+        - save: if False, deletes arrow images, otherwise saves in RotatingImages/Arrows
+     Output:
+        - X: array corresponding to data set of trasnlated images
+    '''
+    if os.path.isdir('RotatingImages/Arrows') == False: os.mkdir('RotatingImages/Arrows') #makes folder to save images
+    for value in range(0, N_images):
+        fig, ax = plt.subplots()
+        ax.arrow(0.5,0.5,0.3*np.cos(np.pi*value/100),0.3*np.sin(np.pi*value/100), width = 0.1, length_includes_head = True, 
+                 head_width = 0.3, color = 'black') #make the arrows centered at 0.5x0.5 and rotate them in a full turn in intervals of 360/20 degrees
+        ax.set_xlim([0, 1])
+        ax.set_ylim([0, 1])
+        plt.gca().set_aspect('equal', adjustable='box') #make scale of axes as similar as possible
+        plt.axis('off')  
+        plt.savefig('RotatingImages/Arrows/'+'rot'+str(value)+'.png', dpi=50) #dpi controls the number of pixels used
+        plt.close() 
+
+    if verbosity == 2:
+        # Plot an image
+        image = plt.imread('RotatingImages/Arrows/'+'rot10.png')
+        gray = rgb2gray(image)    
+        plt.imshow(gray, cmap=plt.get_cmap('gray'), vmin=0, vmax=1)
+        plt.axis('off')
+        plt.show()
+        np.shape(gray)
+    
+    rot_dataset = []
+    for value in range(0,N_images):
+        image = plt.imread('RotatingImages/Arrows/'+'rot'+str(value)+'.png')
+        gray = rgb2gray(image)    
+        plt.imshow(gray, cmap=plt.get_cmap('gray'), vmin=0, vmax=1)
+        plt.axis('off')
+        np.shape(gray)
+        rot_dataset.append(gray.reshape(-1))
+        plt.close() 
+
+    X = rot_dataset
+    X = np.array(X)
+    for i in range(np.shape(X)[0]): X[i,:] /= np.linalg.norm(X[i,:])
+    
+    if save == False:
+        shutil.rmtree('/RotatingImages/Arrows')
+    return X
 
 #sample on SO(3) orbits
 def delta(i,j):

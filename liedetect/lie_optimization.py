@@ -4,6 +4,7 @@ import autograd.numpy as np
 from autograd import grad   
 import pymanopt
 import velour
+import copy
 
 def NormalFormSkewSymmetricMatrices(Matrices, verbose=True, verbosity=0):
     d = np.shape(Matrices[0])[0]
