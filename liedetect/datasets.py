@@ -222,6 +222,68 @@ def ArrowImages(N_images = 200, verbosity = 1, save = False):
         shutil.rmtree('/RotatingImages/Arrows')
     return X
 
+def rotate_image(image, angle):
+    '''
+    Roatetes image by angle degrees around its center
+    Input:
+        - image: rank 2 tensor to be rotated
+        - angle: value in degrees to rotate the image
+    Output:
+        - output: rank 2 tensor of rotated image
+    Code from https://stackoverflow.com/questions/9041681/opencv-python-rotate-image-by-x-degrees-around-specific-point
+    OBS.: Requires cv2.''' 
+    import cv2
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    return result
+
+def RotMNIST(number_of_rotations = 50, size_train = 1000, size_test = 50):
+    '''
+    Generates a data set of size_train MNIST images and number_of_rotations random rotations about their centers, together with size_test randomly rotated images about their center
+    Input:
+        - number_of_rotations: number of random rotations to each train image
+        - size_train: total number of images to be rotated
+        - size_test: total test size
+    Output: X_tain, y_train, X_test, y_test
+    Notice that the shapes are
+        - X_train: (number_of_rotations*size_train,28,28)
+        - y_train: (number_of_rotations*size_train,)
+        - X_test: (size_test,28,28)
+        - y_test: (size_test,)
+    OBS.: Requires keras and cv2. 
+    '''
+    from keras.datasets import mnist
+    
+    #downloads MNIST
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    
+    #takes random sets from train and test
+    subset_train = random.sample(range(len(X_train)), size_train)
+    subset_test = random.sample(range(len(X_test)), size_test)
+    
+    #makes train and test sets
+    X_train, y_train = X_train[subset_train], y_train[subset_train]
+    X_test, y_test = X_test[subset_test], y_test[subset_test]
+    
+    #makes data set of rotated images for both training and test
+    X_train_rot = []
+    y_train_rot = []
+    
+    for im_index, im in enumerate(X_train):
+        for i in range(number_of_rotations):
+            X_train_rot.append(rotate_image(im, random.uniform(0, 360)))
+            y_train_rot.append(y_train[im_index])
+    
+    X_test_rot = []
+    y_test_rot = []
+    
+    for im_index, im in enumerate(X_test):
+        X_test_rot.append(rotate_image(im, random.uniform(0, 360)))
+        y_test_rot.append(y_test[im_index])
+            
+    return np.array(X_train_rot), np.array(y_train_rot), np.array(X_test_rot), np.array(y_test_rot)
+
 #sample on SO(3) orbits
 def delta(i,j):
     '''
@@ -337,48 +399,3 @@ def SampleSO3(freq,  n_points = 500, conjugate = True, verbose = False, plot = F
         velour.PlotPCA(Sample); plt.show();
     
     return Sample, [A_1,A_2, A_3]
-
-def rotate_image(image, angle):
-    '''
-    Code from https://stackoverflow.com/questions/9041681/opencv-python-rotate-image-by-x-degrees-around-specific-point
-    OBS.: Requires cv2.''' 
-    import cv2
-    image_center = tuple(np.array(image.shape[1::-1]) / 2)
-    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-    return result
-
-def RotMNIST(number_of_rotations = 50, size_train = 1000, size_test = 50):
-    '''
-    OBS.: Requires keras and cv2. 
-    '''
-    from keras.datasets import mnist
-    
-    #downloads MNIST
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
-    
-    #takes random sets from train and test
-    subset_train = random.sample(range(len(X_train)), size_train)
-    subset_test = random.sample(range(len(X_test)), size_test)
-    
-    #makes train and test sets
-    X_train, y_train = X_train[subset_train], y_train[subset_train]
-    X_test, y_test = X_test[subset_test], y_test[subset_test]
-    
-    #makes data set of rotated images for both training and test
-    X_train_rot = []
-    y_train_rot = []
-    
-    for im_index, im in enumerate(X_train):
-        for i in range(number_of_rotations):
-            X_train_rot.append(rotate_image(im, random.uniform(0, 360)))
-            y_train_rot.append(y_train[im_index])
-    
-    X_test_rot = []
-    y_test_rot = []
-    
-    for im_index, im in enumerate(X_test):
-        X_test_rot.append(rotate_image(im, random.uniform(0, 360)))
-        y_test_rot.append(y_test[im_index])
-            
-    return np.array(X_train_rot), np.array(y_train_rot), np.array(X_test_rot), np.array(y_test_rot)
