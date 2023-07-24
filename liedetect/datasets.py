@@ -7,6 +7,8 @@ import os
 import shutil
 import random
 from .matrix_manipulation import *
+from .lie_optimization import *
+
 ' Functions to sample points '
 
 #sample on torus, both sample knots and torus T^n orbits
@@ -48,15 +50,14 @@ def SampleOnTorus(dim=2, ambient_dim=6, n_points=100, frequencies=None, frequenc
              [-8.29874782e-01 -7.75357483e-18 -2.62213496e-01  1.50345062e+00]
              [ 6.30826615e-01  2.62213496e-01 -2.27076835e-17  1.04590992e+00]
              [ 7.00227388e-01 -1.50345062e+00 -1.04590992e+00 -3.80730947e-19]]    
-    '''
-    if verbose: print('-----> Representation of T^'+repr(dim), 'in R^'+repr(ambient_dim))
-    
+    '''    
     # Define frequencies
-    if frequencies==None: frequencies = random.choice(GetFrequenciesToTest(dim, ambient_dim, frequency_max))
-            
+#    if frequencies==None: frequencies = random.choice(GetFrequenciesToTest(dim, ambient_dim, frequency_max))
+    if frequencies==None: frequencies=GetRandomLattice(dim, ambient_dim, frequency_max)
+    if verbose: print('-----> Representation of T^'+repr(dim), 'in R^'+repr(ambient_dim)+'\x1b[1;31m'+' with frequencies '+repr(frequencies)+'\x1b[0m')
+        
     # Define a canonical Lie algebra
     LieAlgebra = GetCanonicalLieAlgebraTorus(frequencies)   
-    print('frequencies:', frequencies)
         
     # Make basis orthonormal    
     LieAlgebra = GramSchmidtOrthonormalizationMatrices(LieAlgebra)
@@ -88,7 +89,7 @@ def SampleOnTorus(dim=2, ambient_dim=6, n_points=100, frequencies=None, frequenc
         Sample.append(s[:,0])
     Sample = np.array(Sample)
     
-    return Sample, LieAlgebra
+    return Sample, LieAlgebra, frequencies
 
 def GorillaImages(dim = 1, file = "./RotatingImages/gorilla_white.png", pas = 7, save = None, verbosity = 1):
     '''
@@ -399,3 +400,63 @@ def SampleSO3(freq,  n_points = 500, conjugate = True, verbose = False, plot = F
         velour.PlotPCA(Sample); plt.show();
     
     return Sample, [A_1,A_2, A_3]
+
+def SampleOnSU2(dim=2, ambient_dim=6, n_points=100, frequencies=None, conjugate=True, right_multiply=True, verbose=False):
+    '''
+    
+    '''        
+    # Define frequencies
+    FrequenciesToTest = partition_su2(ambient_dim)
+    if frequencies==None: 
+        FrequenciesToTestAlmostFaithful = [f for f in FrequenciesToTest if len(np.unique(f))==len(f)
+                                          and 1 not in f]
+        frequencies = random.choice(FrequenciesToTestAlmostFaithful)
+    if verbose: print('-----> Representation of SU(2) in R^'+repr(ambient_dim)+'\x1b[1;31m'+' with partition '+repr(frequencies)+'\x1b[0m')
+            
+    # Define a canonical Lie algebra
+    LieAlgebra = GetCanonicalLieAlgebraSU2(frequencies)   
+    
+    # Get coefficients
+    Coefficients = [GetCoefficientSU2(A) for A in LieAlgebra]
+    if np.any([np.abs(t-Coefficients[0])>1e-5 for t in Coefficients]): print('Error: the coefficients are not identical')
+
+    coefficient = Coefficients[0]
+    if verbose: print('Coefficient:', round(coefficient/(4*np.pi),4))
+    if any([np.linalg.norm(scipy.linalg.expm(coefficient*A)-np.eye(np.shape(A)[0]))>1e-5 for A in LieAlgebra]): 
+        print('Error! Incorrect coefficient before GramSchmidt', coefficient)
+        for A in LieAlgebra: print(scipy.linalg.expm(coefficient*A)) 
+
+    coefficient = Coefficients[0]*np.linalg.norm(LieAlgebra[0])
+                
+    # Make basis orthonormal    
+    LieAlgebra = GramSchmidtOrthonormalizationMatrices(LieAlgebra)
+    if any([np.linalg.norm(scipy.linalg.expm(coefficient*A)-np.eye(np.shape(A)[0]))>1e-5 for A in LieAlgebra]): 
+        print('Error! Incorrect coefficient', coefficient)
+        for A in LieAlgebra: print(scipy.linalg.expm(coefficient*A)) 
+        
+    # Define orthogonal matrix P and right-multiply
+    if right_multiply:
+        P = scipy.stats.special_ortho_group.rvs(dim)
+        LieAlgebra = [np.sum([LieAlgebra[j]*P[j,i] for j in range(dim)],0) for i in range(dim)]
+            
+    # Define orthogonal matrix O and conjugate
+    if conjugate: O = scipy.stats.special_ortho_group.rvs(ambient_dim)
+    else: O = np.eye(ambient_dim)
+    for i in range(dim): LieAlgebra[i] = O @ LieAlgebra[i] @ O.T
+        
+    # Define origin Euclidean vector x
+    x = np.ones((ambient_dim,1))
+    x /= np.linalg.norm(x)
+
+    # Draw sample from uniform distribution
+    dim = 3    
+    Sample = []
+    Angles = [np.random.uniform(0,coefficient,n_points) for i in range(dim)]
+    for i in range(n_points):
+        s = x.copy()
+        for j in range(dim): 
+            s = scipy.linalg.expm(Angles[j][i]*LieAlgebra[j]) @ s
+        Sample.append(s[:,0])
+    Sample = np.array(Sample)
+
+    return Sample, LieAlgebra, frequencies
