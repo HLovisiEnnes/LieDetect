@@ -2,7 +2,7 @@
 
 ## Background
 
-In the preprint https://arxiv.org/abs/2309.03086, we suggested a new algorithm to estimate representations of compact Lie groups from finite samples of their orbits. The algorithm takes as an input a point cloud $X$ in $\mathbb{R}^n$, a compact Lie group $G$ (among $\mathrm{SO}(2)$, $T^d$ for $d\geq 1$, $\mathrm{SO}(3)$, and $\mathrm{SU}(2)$), and returns a representation of $G$ in $\mathbb{R}^n$ and an orbit $\mathcal{O}$ that, if succeeded, lies close to $X$.
+In the preprint https://arxiv.org/abs/2309.03086, we suggested a new algorithm to estimate representations of compact Lie groups from finite samples of their orbits. The algorithm takes as an input a point cloud $X$ in $\mathbb{R}^n$, a compact Lie group $G$ (among $\mathrm{SO}(2)$, $T^d$ for $d\geq 1$, $\mathrm{SO}(3)$, and $SU(2)$), and returns a representation of $G$ in $\mathbb{R}^n$ and an orbit $\mathcal{O}$ that, if succeeded, lies close to $X$.
 
 At its core, the algorithm enumerates the representations of the group in $\mathbb{R}^n$ (up to orbit-equivalence), an determines the best one, at the level of Lie algebras, and through an optimization over the orthogonal group $\mathrm{O}(n)$. The following animation illustrates the case of a representation of $\mathrm{SO}(2)$ in $\mathbb{R}^{12}$. Additional illustrations are found at https://www.youtube.com/playlist?list=PL_FkltNTtklBQlwrGyAnisJ-lGiLFeTVw.
 
