@@ -1,7 +1,5 @@
 # LieDetect: Detection of representation orbits of compact Lie groups from point clouds
 
----
-
 ## Background
 
 In this [arxiv preprint](https://arxiv.org/abs/2309.03086), we suggested a new algorithm to estimate representations of
@@ -92,8 +90,8 @@ representations of Lie groups. This information can subsequently be used for var
 
 Although aiming at implementing continuous symmetries, such as rotations for 2D images, common equivariant neural
 networks only implements finite subgroups, or approximate symmetries. In `notebooks/steerable_cnn.ipynb`, we propose a
-simple experiment to quantify good are *steerable convolutional neural networks* at approximating $\mathrm{SO}(2)$
-symmetries, when trained for a finite subset of $n$ rotations.
+simple experiment to quantify how good are *steerable convolutional neural networks* at approximating 
+$\mathrm{SO}(2)$-symmetries, when only constrained to the finite subgroup $R_n$ of $n$ rotations.
 
 <p align="center">
 <img
