@@ -2,7 +2,7 @@
 
 ## Background
 
-In this [arxiv preprint](https://arxiv.org/abs/2309.03086), we suggested a new algorithm to estimate representations of
+In this [paper](https://link.springer.com/article/10.1007/s10208-025-09728-4), we suggested a new algorithm to estimate representations of
 compact Lie groups from finite samples of their orbits. The algorithm takes as an input a point cloud $X$ in 
 $\mathbb{R}^n$, a compact Lie group $G$—among $\mathrm{SO}(2)$, $T^d$ for $d\geq 1$, $\mathrm{SO}(3)$, and 
 $\mathrm{SU}(2)$—and returns a representation of $G$ in $\mathbb{R}^n$ and an orbit $\mathcal{O}$ that, if succeeded, 
